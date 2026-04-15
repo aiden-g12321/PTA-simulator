@@ -116,9 +116,10 @@ class SimulatedData:
         data_dict = dict()
 
         # first and last toas across PTA
-        tmins = [p.toas.min() for p in self.pta.pulsars]
-        tmaxs = [p.toas.max() for p in self.pta.pulsars]
+        tmins = [np.min(p.toas) for p in self.pta.pulsars]
+        tmaxs = [np.max(p.toas) for p in self.pta.pulsars]
         Tspan = np.max(tmaxs) - np.min(tmins)
+        assert np.isclose(Tspan, self.pta.Tspan)
 
         with tqdm(range(self.npsrs), desc='building pulsar models') as pbar:
             for i in pbar:
@@ -167,7 +168,7 @@ class SimulatedData:
                 Ntinv = psr.Ntinv
                 TDNTD = F_D.T @ Ntinv @ F_D
                 TNTD = F.T @ Ntinv @ F_D
-                TDNr = F_D.T @ Ntinv @ psr.residuals
+                TDNr = F_D.T @ Ntinv @ psr.projected_residuals()
                 
                 psr_dist_method = 'simulated'
                 psr_dist_and_uncertainty = (psr.dist_kpc, psr.dist_kpc_std)
@@ -175,7 +176,7 @@ class SimulatedData:
                 # store pulsar data and associated objects in dictionary
                 data_dict[psr.name] = dict(
                     phi = psr.phi,
-                    theta = np.arccos(psr.costheta),
+                    theta = psr.theta,
                     Tspan = Tspan,
                     log10_Arn = log10_Arn,
                     gamma = gamma,

@@ -20,7 +20,9 @@ class PTA:
         self.psrdists_std = np.array([psr.dist_kpc_std for psr in pulsars])
 
         # timing / frequency attributes
-        self.Tspan = np.max([psr.psr_Tspan for psr in pulsars])
+        self.toa_mins = np.array([psr.toas.min() for psr in pulsars])
+        self.toa_maxs = np.array([psr.toas.max() for psr in pulsars])
+        self.Tspan = np.max(self.toa_maxs) - np.min(self.toa_mins)
         self.Tspan_yrs = self.Tspan / utils.year
         self.Nf = Nf
         self.Na = 2 * self.Nf
@@ -84,7 +86,8 @@ class PTA:
             irn_delay = self.Fs[ii] @ a_psr_irn_inj
             pulsar.add_delay(irn_delay)
             a_irn_inj.append(a_psr_irn_inj)
-        self.params_inj['a_irn'] = a_irn_inj
+        self.params_inj['a_irn'] = np.array(a_irn_inj)
+        self.params_inj['rn_pl'] = np.array([[log10_As[ii], gammas[ii]] for ii in range(self.npsrs)])
 
     # stochastic GWB with Hellings-Downs correlations
     def add_gwb_delay(self, log10_A_gwb, gamma_gwb, seed=0):
@@ -98,6 +101,7 @@ class PTA:
             gwb_delay = self.Fs[ii] @ a_psr_gwb_inj[ii]
             pulsar.add_delay(gwb_delay)
         self.params_inj['a_gwb'] = a_psr_gwb_inj
+        self.params_inj['gwb_pl'] = np.array([log10_A_gwb, gamma_gwb])
 
     # i.i.d. zero-mean Gaussian white noise
     def add_white_noise(self, seed=0):
@@ -117,5 +121,19 @@ class PTA:
             delay = self.Fs[ii] @ a_inj[ii]
             pulsar.add_delay(delay)
         self.params_inj['a'] = a_inj
+        self.params_inj['gwb_pl'] = np.array([log10_A_gwb, gamma_gwb])
+        self.params_inj['rn_pl'] = np.array([[log10_As[ii], gammas[ii]] for ii in range(self.npsrs)])
 
-    
+    # color base_draws with HD-correlated power law spectrum
+    def add_non_gaussian_gwb_delay(self, base_draws, base_variance, log10_A_gwb, gamma_gwb, seed=0):
+        np.random.seed(seed)
+        phi_gwb = np.kron(self.hdmat, np.diag(utils.power_law(log10_A_gwb, gamma_gwb, self.freqs)))
+        L = np.linalg.cholesky(phi_gwb, upper=False) * np.sqrt(1. / base_variance)
+        a_inj = L @ base_draws.flatten()
+        a_inj = a_inj.reshape((self.npsrs, self.Na))
+        for ii, pulsar in enumerate(self.pulsars):
+            delay = self.Fs[ii] @ a_inj[ii]
+            pulsar.add_delay(delay)
+        self.params_inj['a_gwb'] = a_inj
+        self.params_inj['gwb_pl'] = np.array([log10_A_gwb, gamma_gwb])
+

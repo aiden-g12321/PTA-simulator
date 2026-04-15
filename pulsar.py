@@ -60,12 +60,11 @@ class Pulsar:
 
     def add_white_noise(self, seed=0):
         np.random.seed(seed)
-        white_noise = np.random.normal(loc=0., scale=1.) * self.toa_errors
+        white_noise = np.random.normal(loc=np.zeros_like(self.toas), scale=self.toa_errors)
         self.residuals += white_noise
 
     def projected_residuals(self):
-        return self.R @ self.residuals
-    
+        return self.R @ self.residuals   
 
 
 def simulate_toas(first_mjd, Tspan_yr, monthly_observations=1, random_offsets_in_days=2, seed=0):
