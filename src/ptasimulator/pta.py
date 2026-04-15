@@ -4,8 +4,8 @@ Build a PTA out of constituent pulsars with simulation methods.
 
 
 import numpy as np
-import utilities as utils
-from pulsar import Pulsar
+import ptasimulator.utilities as utils
+from ptasimulator.pulsar import Pulsar
 
 
 class PTA:

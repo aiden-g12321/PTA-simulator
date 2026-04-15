@@ -8,9 +8,9 @@ from tqdm import tqdm
 from scipy.signal.windows import tukey
 import jax.numpy as jnp
 
-import utilities as utils
-from pulsar import Pulsar
-from pta import PTA
+import ptasimulator.utilities as utils
+from ptasimulator.pulsar import Pulsar
+from ptasimulator.pta import PTA
 from prometheus.utilities import renorm
 
 

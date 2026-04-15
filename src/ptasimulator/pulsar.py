@@ -3,7 +3,7 @@ A simulated pulsar object.
 '''
 
 import numpy as np
-import utilities as utils
+import ptasimulator.utilities as utils
 
 
 class Pulsar:
